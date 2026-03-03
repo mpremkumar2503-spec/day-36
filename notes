@@ -1,1 +1,210 @@
+1. DB Connection Process
+ How MongoDB connects locally
 
+When MongoDB is installed locally:
+
+MongoDB server runs on:
+
+mongodb://localhost:27017
+
+Default port → 27017
+
+Example database URL:
+
+mongodb://localhost:27017/mydatabase
+
+ Here:
+
+localhost = your machine
+
+27017 = MongoDB port
+
+mydatabase = database name
+
+What mongoose.connect() does
+mongoose.connect("mongodb://localhost:27017/mydatabase")
+
+It:
+
+Connects Node.js to MongoDB
+
+Creates connection pool
+
+Initializes database if not exists
+
+Prepares Mongoose to use schemas & models
+
+Internally:
+
+Opens TCP connection
+
+Authenticates (if required)
+
+Keeps connection alive
+
+ Why we use async/await with try-catch
+
+DB connection takes time (network operation).
+
+So we use async/await:
+
+try {
+  await mongoose.connect(DB_URL)
+  console.log("DB Connected")
+} catch (error) {
+  console.log("Connection Failed")
+}
+Why?
+
+✔ Prevents server crash
+✔ Handles connection errors
+✔ Makes code readable
+
+ What happens if DB connection fails?
+
+If not handled:
+❌ App crashes
+❌ Server won’t start
+❌ APIs won’t work
+
+With try-catch:
+✔ Error logged
+✔ You can retry
+✔ App can exit safely
+
+2. ORM / ODM Methods Understanding
+
+(Mongoose is actually ODM – Object Document Mapper)
+
+create()
+User.create({ name: "Prem" })
+
+ Inserts new document
+
+SQL Equivalent:
+INSERT INTO users VALUES (...)
+ find()
+User.find()
+
+ Gets all documents
+
+SQL Equivalent:
+SELECT * FROM users;
+ findById()
+User.findById("id")
+
+ Gets single document by _id
+
+SQL Equivalent:
+SELECT * FROM users WHERE id = ?
+ findByIdAndUpdate()
+User.findByIdAndUpdate(id, { age: 25 })
+SQL Equivalent:
+UPDATE users SET age = 25 WHERE id = ?
+ findByIdAndDelete()
+User.findByIdAndDelete(id)
+SQL Equivalent:
+DELETE FROM users WHERE id = ?
+3. SQL vs MongoDB Mapping
+SQL Term	MongoDB Equivalent
+Database	Database
+Table	Collection
+Row	Document
+Column	Field
+Primary Key	_id
+Example:
+
+SQL:
+
+Database → school
+Table → students
+Row → 1 record
+
+MongoDB:
+
+Database → school
+Collection → students
+Document → { name: "Prem" }
+4. Schema Reading Task
+
+Given:
+
+{
+  name: { type: String, required: true },
+  role: { type: String, enum: ["admin", "manager"] },
+  age: { type: Number, default: 18 }
+}
+ What validations are applied?
+Field	Validation
+name	Required
+role	Only "admin" or "manager"
+age	Default 18
+ What happens if role is "user"?
+
+❌ Validation Error
+
+Because:
+
+enum: ["admin", "manager"]
+
+"user" is not allowed.
+
+ What happens if age is not provided?
+
+✔ Automatically set to 18
+
+Because:
+
+default: 18
+
+5.Schema vs Model
+ What is Schema?
+
+Schema = Structure / Blueprint
+
+const userSchema = new mongoose.Schema({
+  name: String
+})
+
+Defines:
+
+Fields
+
+Types
+
+Validations
+
+ What is Model?
+
+Model = Interface to interact with DB
+
+const User = mongoose.model("User", userSchema)
+
+Used to:
+
+create()
+
+find()
+
+update()
+
+delete()
+
+ Why do we need Model after schema?
+
+Schema only defines structure.
+
+Model:
+✔ Connects schema to collection
+✔ Performs CRUD operations
+✔ Creates MongoDB collection
+
+ What happens internally when we run mongoose.model()?
+
+Registers schema
+
+Creates collection (lowercase + plural)
+
+Returns constructor function
+
+Binds model to DB connection
